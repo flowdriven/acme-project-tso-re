@@ -2,7 +2,7 @@ import os
 
 from utils.utils import setup_logger, get_paths
 from utils.check_xsd import validate_xsd
-from utils.check_xml import check_one_full_day
+from utils.check_xml import process_xml
 
 dataset_list = os.getenv("DATASET_LIST", "provisional,final").split(",")
 prefix = os.getenv("PREFIX")
@@ -18,11 +18,11 @@ def main():
 
     for dataset in dataset_list:
         paths = get_paths(dataset) 
-        #logger.info(f"Starting XML validation: {paths["xml_path"]} against {paths["xsd_path"]}")
 
         xml_string = read_file_as_string(paths["xml_path"])
         xsd_string = read_file_as_string(paths["xsd_path"])
 
+        # xsd schema validation 
         is_valid, errors = validate_xsd(xml_string, xsd_string)
 
         if is_valid:
@@ -32,16 +32,15 @@ def main():
             for err in errors:
                 logger.error(f"  - {err}")
 
-        is_valid, errors = check_one_full_day(xml_string)
+        # quality checks  
+        is_valid, errors = process_xml(xml_string)
 
         if is_valid:
-            logger.info("✅ Period of data is exactly 1 day.")
+            logger.info("✅ XML is valid.")
         else:
-            #logger.error("❌ XML is invalid. Errors:")
-            #for err in errors:
-            logger.error(f"{errors}")
-
-    # validate xml quality checks
+            logger.error("❌ XML is invalid. Errors:")
+            for err in errors:
+                logger.error(f"{errors}")
 
     # write db 
 

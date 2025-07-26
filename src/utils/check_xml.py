@@ -4,21 +4,19 @@ import os
 import pytz
 
 datetime_tags = os.getenv("DATETIME_TAGS", "FromTimestamp,ToTimestamp,CreationTimestamp").split(",")
-indexed_id = os.getenv("INDEXED_ID")
+indexed_id = os.getenv("INDEXED_ID", "MeterPointId")
 date_from, date_to = os.getenv("RANGE", "FromTimestamp,ToTimestamp").split(",")
 reading_list = os.getenv("READING_LIST")
 
 errors = []
 
-def check_one_full_day(xml_string: str) -> tuple[bool, str]:
+def check_one_full_day(xml_root) -> tuple[bool, str]:
     """
     Checks that the time period in the XML is exactly 1 day.
     """ 
     try:
-        root = etree.fromstring(xml_string.encode("utf-8"))
-
-        from_elem = root.find(f".//{date_from}")
-        to_elem = root.find(f".//{date_to}")
+        from_elem = xml_root.find(f".//{date_from}")
+        to_elem = xml_root.find(f".//{date_to}")
 
         if from_elem is None or to_elem is None:
             return False, f"Missing {date_from} or {date_to}."
@@ -93,8 +91,13 @@ def process_xml(xml_string: str) -> tuple[bool, dict]:
         if not full_day_ok:
             errors.append(full_day_msg)
 
+        # Validate that values must contain exactly 2 decimals
+        decimal_ok, decimal_errors = validate_two_decimals(root)
+        if not decimal_ok:
+            errors.extend(decimal_errors)
+
         # Get the ID required for indexing the table 
-        indexed_id_elem = root.find(".//{indexed_id}")
+        indexed_id_elem = root.find(f".//{indexed_id}")
         if indexed_id_elem is None or not indexed_id_elem.text:
             errors.append("Missing or empty indexed id element.")
             indexed_id_value = None
