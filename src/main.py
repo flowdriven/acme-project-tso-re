@@ -1,6 +1,7 @@
 import os
 
 from utils.utils import setup_logger, get_paths
+from utils.check_xsd import validate_xsd
 
 dataset_list = os.getenv("DATASET_LIST").split(",")
 prefix = os.getenv("PREFIX")
@@ -21,8 +22,14 @@ def main():
         xml_string = read_file_as_string(paths["xml_path"])
         xsd_string = read_file_as_string(paths["xsd_path"])
 
+        is_valid, errors = validate_xsd(xml_string, xsd_string)
 
-    # validate xml against xsd schemas 
+        if is_valid:
+            logger.info("✅ XML is valid against the XSD.")
+        else:
+            logger.error("❌ XML is invalid. Errors:")
+            for err in errors:
+                logger.error(f"  - {err}")
 
     # validate xml quality checks
 
