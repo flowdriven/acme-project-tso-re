@@ -1,5 +1,12 @@
+import os
+
+from utils.utils import setup_logger
+
+dataset_list = os.getenv("DATASET_LIST").split(",")
+prefix = os.getenv("PREFIX")
+
 def main():
-    # setup logger 
+    logger = setup_logger()
 
     # read xml as strings
 
