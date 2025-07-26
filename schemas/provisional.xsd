@@ -1,0 +1,31 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="MeterData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:long" name="MeterPointId"/>
+        <xs:element type="xs:dateTime" name="FromTimestamp"/>
+        <xs:element type="xs:dateTime" name="ToTimestamp"/>
+        <xs:element type="xs:string" name="FlowDirection"/>
+        <xs:element type="xs:duration" name="Resolution"/>
+        <xs:element type="xs:string" name="Unit"/>
+        <xs:element type="xs:dateTime" name="CreationTimestamp"/>
+        <xs:element type="xs:string" name="DataType"/>
+        <xs:element name="ReadingList">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Reading" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:byte" name="Sequence"/>
+                    <xs:element type="xs:float" name="Value"/>
+                    <xs:element type="xs:string" name="Quality"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
