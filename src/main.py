@@ -3,6 +3,7 @@ import os
 from utils.utils import setup_logger, get_paths
 from utils.check_xsd import validate_xsd
 from utils.check_xml import process_xml
+from utils.write_db import init_db, store_xml_record
 
 dataset_list = os.getenv("DATASET_LIST", "provisional,final").split(",")
 prefix = os.getenv("PREFIX", "acme-tso-re")
@@ -23,26 +24,40 @@ def main():
         xsd_string = read_file_as_string(paths["xsd_path"])
 
         # xsd schema validation 
-        is_valid, errors = validate_xsd(xml_string, xsd_string)
+        is_valid, result = validate_xsd(xml_string, xsd_string)
 
         if is_valid:
             logger.info("XML is valid against the XSD.")
         else:
+            errors = result["Errors"]
             logger.error("! XML is invalid. Errors:")
             for err in errors:
                 logger.error(f"  - {err}")
 
         # quality checks  
-        is_valid, errors = process_xml(xml_string)
+        is_valid, result = process_xml(xml_string)
 
         if is_valid:
             logger.info("File validation completed — status: VALID.")
         else:
+            errors = result["Errors"]
             logger.error("! XML is invalid. Errors:")
             for err in errors:
                 logger.error(f"{errors}")
 
-    # write db 
+        # write db 
+        init_db()
+        
+        indexed_id = result["IndexedId"]
+        validated_xml = result["ConvertedXml"]
+
+        payload = {
+            "IndexedId": indexed_id,
+            "ConvertedXml": validated_xml, 
+            "SourceSystem": prefix
+        }
+
+        store_xml_record(payload)
 
 if __name__ == '__main__':
     main()
