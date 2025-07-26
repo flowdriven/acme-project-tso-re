@@ -5,7 +5,7 @@ from utils.check_xsd import validate_xsd
 from utils.check_xml import process_xml
 
 dataset_list = os.getenv("DATASET_LIST", "provisional,final").split(",")
-prefix = os.getenv("PREFIX")
+prefix = os.getenv("PREFIX", "acme-tso-re")
 
 def read_file_as_string(path: str) -> str:
     if not os.path.exists(path):
@@ -26,9 +26,9 @@ def main():
         is_valid, errors = validate_xsd(xml_string, xsd_string)
 
         if is_valid:
-            logger.info("✅ XML is valid against the XSD.")
+            logger.info("XML is valid against the XSD.")
         else:
-            logger.error("❌ XML is invalid. Errors:")
+            logger.error("! XML is invalid. Errors:")
             for err in errors:
                 logger.error(f"  - {err}")
 
@@ -36,9 +36,9 @@ def main():
         is_valid, errors = process_xml(xml_string)
 
         if is_valid:
-            logger.info("✅ XML is valid.")
+            logger.info("File validation completed — status: VALID.")
         else:
-            logger.error("❌ XML is invalid. Errors:")
+            logger.error("! XML is invalid. Errors:")
             for err in errors:
                 logger.error(f"{errors}")
 

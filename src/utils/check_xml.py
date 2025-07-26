@@ -63,6 +63,32 @@ def validate_two_decimals(xml_root) -> tuple[bool, list]:
 
     return (len(errors) == 0), errors
 
+def validate_sequence_numbers(xml_root) -> tuple[bool, list]:
+    """
+    Checks that <Sequence> values in <ReadingList> start from 1 and increment by 1 with no gaps or duplicates.
+    Returns (True, []) if valid, or (False, [error messages]) if not.
+    """
+    try:
+        sequence_elements = xml_root.findall(".//ReadingList/Reading/Sequence")
+
+        if not sequence_elements:
+            return False, ["No <Sequence> elements found."]
+
+        try:
+            sequence_numbers = [int(seq.text.strip()) for seq in sequence_elements]
+        except Exception as e:
+            return False, [f"Failed to parse one or more <Sequence> elements as integers: {str(e)}"]
+
+        expected = list(range(1, len(sequence_numbers) + 1))
+
+        if sequence_numbers != expected:
+            errors.append(f"Invalid sequence order. Expected {expected}, got {sequence_numbers}.")
+
+        return (len(errors) == 0), errors
+
+    except Exception as e:
+        return False, [f"Error validating sequence numbers: {str(e)}"]
+
 def process_xml(xml_string: str) -> tuple[bool, dict]:
     """
     Process XML string content and run quality checks.
@@ -95,6 +121,12 @@ def process_xml(xml_string: str) -> tuple[bool, dict]:
         decimal_ok, decimal_errors = validate_two_decimals(root)
         if not decimal_ok:
             errors.extend(decimal_errors)
+
+        # Validate that the sequence numbers must start 
+        # from 1 and go incrementally with no gaps.
+        is_sequence_valid, sequence_errors = validate_sequence_numbers(root)
+        if not is_sequence_valid:
+            errors.extend(sequence_errors)
 
         # Get the ID required for indexing the table 
         indexed_id_elem = root.find(f".//{indexed_id}")
