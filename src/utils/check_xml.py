@@ -3,19 +3,22 @@ from datetime import datetime
 import os 
 import pytz
 
-datetime_tags = os.getenv("DATETIME_TAGS").split(",")
+datetime_tags = os.getenv("DATETIME_TAGS", "FromTimestamp,ToTimestamp,CreationTimestamp").split(",")
 indexed_id = os.getenv("INDEXED_ID")
-date_from, date_to = os.getenv("RANGE").split(",")
+date_from, date_to = os.getenv("RANGE", "FromTimestamp,ToTimestamp").split(",")
+reading_list = os.getenv("READING_LIST")
 
 errors = []
 
-def check_one_full_day(xml_root) -> tuple[bool, str]:
+def check_one_full_day(xml_string: str) -> tuple[bool, str]:
     """
     Checks that the time period in the XML is exactly 1 day.
-    """
+    """ 
     try:
-        from_elem = xml_root.find(".//{date_from}")
-        to_elem = xml_root.find(".//{date_to}")
+        root = etree.fromstring(xml_string.encode("utf-8"))
+
+        from_elem = root.find(f".//{date_from}")
+        to_elem = root.find(f".//{date_to}")
 
         if from_elem is None or to_elem is None:
             return False, f"Missing {date_from} or {date_to}."
@@ -34,7 +37,34 @@ def check_one_full_day(xml_root) -> tuple[bool, str]:
 
     except Exception as e:
         return False, f"Error checking period duration: {str(e)}"
-    
+
+def validate_two_decimals(xml_root) -> tuple[bool, list]:
+    """
+    Validates that all <Value> elements inside <ReadingList> have exactly 2 decimal places.
+    Returns (True, []) if all are valid, or (False, [error messages]) otherwise.
+    """
+    reading_values = xml_root.findall(".//ReadingList/Reading/Value")
+    #reading_values = xml_root.findall(".//{reading_list}")
+
+    for i, value_elem in enumerate(reading_values, start=1):
+        if value_elem is None or not value_elem.text:
+            errors.append(f"Reading {i}: missing or empty <Value>.")
+            continue
+
+        try:
+            value_str = value_elem.text.strip()
+            if "." not in value_str:
+                errors.append(f"Reading {i}: value '{value_str}' has no decimal part.")
+                continue
+
+            decimal_part = value_str.split(".")[1]
+            if len(decimal_part) != 2:
+                errors.append(f"Reading {i}: value '{value_str}' does not have exactly 2 decimal places.")
+        except Exception as e:
+            errors.append(f"Reading {i}: error validating value '{value_elem.text}': {str(e)}")
+
+    return (len(errors) == 0), errors
+
 def process_xml(xml_string: str) -> tuple[bool, dict]:
     """
     Process XML string content and run quality checks.

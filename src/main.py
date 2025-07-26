@@ -2,8 +2,9 @@ import os
 
 from utils.utils import setup_logger, get_paths
 from utils.check_xsd import validate_xsd
+from utils.check_xml import check_one_full_day
 
-dataset_list = os.getenv("DATASET_LIST").split(",")
+dataset_list = os.getenv("DATASET_LIST", "provisional,final").split(",")
 prefix = os.getenv("PREFIX")
 
 def read_file_as_string(path: str) -> str:
@@ -30,6 +31,15 @@ def main():
             logger.error("❌ XML is invalid. Errors:")
             for err in errors:
                 logger.error(f"  - {err}")
+
+        is_valid, errors = check_one_full_day(xml_string)
+
+        if is_valid:
+            logger.info("✅ Period of data is exactly 1 day.")
+        else:
+            #logger.error("❌ XML is invalid. Errors:")
+            #for err in errors:
+            logger.error(f"{errors}")
 
     # validate xml quality checks
 
