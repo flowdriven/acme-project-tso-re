@@ -3,6 +3,7 @@ from datetime import datetime
 import sqlite3
 import os 
 
+error_messages = []
 db_dir, db_name = os.getenv("DB_DIR", "db,acme_tso_re.db").split(",")
 
 # Path to the SQLite database file at project root
@@ -39,10 +40,22 @@ def store_xml_record(payload: dict):
     source_system = payload["SourceSystem"]
     created_at = datetime.utcnow().timestamp()
 
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO xml_data (record_id, content, source_system, created_at)
-            VALUES (?, ?, ?, ?)
-        """, (record_id, xml_string, source_system, created_at))
-        conn.commit()
+    try: 
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO xml_data (record_id, content, source_system, created_at)
+                VALUES (?, ?, ?, ?)
+            """, (record_id, xml_string, source_system, created_at))
+            conn.commit()
+
+            return True, error_messages 
+
+    except sqlite3.IntegrityError as e:
+        return False, [f"Error: Integrity constraint violated - {str(e)}"]
+
+    except sqlite3.OperationalError as e:
+        return False, [f"Error: Operational issue - {str(e)}"]
+
+    except Exception as e:
+        return False, [f"An unexpected error occurred: {str(e)}"]

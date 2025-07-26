@@ -57,7 +57,13 @@ def main():
             "SourceSystem": prefix
         }
 
-        store_xml_record(payload)
+        success, errors = store_xml_record(payload) 
+        if success:
+                logger.info("XML storing completed ")
+        else:
+            logger.error("! XML storing failed. Errors:")
+            for err in errors:
+                logger.error(f"{errors}")
 
 if __name__ == '__main__':
     main()
