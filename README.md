@@ -84,21 +84,21 @@ python .\main.py
 Should messages be processed in real-time as they arrive, or in scheduled batches?
 
 #### Suggested Approach:
-Batch processing (e.g., hourly) is recommended to balance throughput and system load.
-Real-time processing may be considered if latency requirements are strict.
+* Batch processing (e.g., hourly) is recommended to balance throughput and system load.
+* Real-time processing may be considered if latency requirements are strict.
 
 ### Pipeline Triggering Mechanism
 
 #### Open Question:
-How should the pipeline be triggered—event-driven or scheduled?
+How should the pipeline be triggered: event-driven or scheduled?
 
 #### Suggested Approach:
-If files are dropped in cloud storage (e.g., S3, Azure Blob), use event-driven triggers.
-Otherwise, use scheduled DAGs (e.g., every hour in Airflow).
+* If files are dropped in cloud storage (e.g., S3, Azure Blob), use event-driven triggers.
+* Otherwise, use scheduled DAGs (e.g., every hour in Airflow).
 
 #### Best Practices:
-Use Airflow sensors (e.g., S3KeySensor, FileSensor) for event-driven pipelines.
-Combine with timeout and fallback logic to avoid stuck DAGs.
+* Use Airflow sensors (e.g., S3KeySensor, FileSensor) for event-driven pipelines.
+* Combine with timeout and fallback logic to avoid stuck DAGs.
 
 ### File Retention and Lifecycle
 
@@ -106,12 +106,12 @@ Combine with timeout and fallback logic to avoid stuck DAGs.
 Should processed files be deleted, archived, or retained?
 
 #### Suggested Approach:
-Move processed files to an archive folder.
-Move invalid files to a quarantine folder.
+* Move processed files to an archive folder.
+* Move invalid files to a quarantine folder.
 
 #### Best Practices:
-Apply a retention policy (e.g., 30–90 days) for both archive and quarantine.
-Use timestamped (partitioned) folder structures for traceability (e.g., /archive/2025/07/27/).
+* Apply a retention policy (e.g., 30–90 days) for both archive and quarantine.
+* Use timestamped (partitioned) folder structures for traceability (e.g., /archive/2025/07/27/).
 
 ### Handling Invalid Messages
 
@@ -119,12 +119,12 @@ Use timestamped (partitioned) folder structures for traceability (e.g., /archive
 Should invalid messages be retried or discarded?
 
 #### Suggested Approach:
-Store invalid messages in a quarantine table or storage with error metadata.
-Enable manual or automated reprocessing.
+* Store invalid messages in a quarantine table or storage with error metadata.
+* Enable manual or automated reprocessing.
 
 #### Best Practices:
-Log validation errors with clear error codes.
-Use Airflow DAGs or CLI tools to reprocess quarantined data. 
+* Log validation errors with clear error codes (enabled in the current implementation).
+* Use Airflow DAGs or CLI tools to reprocess quarantined data. 
 
 ## 8. Miscellaneous
 
