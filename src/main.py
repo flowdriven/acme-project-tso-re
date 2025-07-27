@@ -18,52 +18,67 @@ def main():
     logger = setup_logger()
 
     for dataset in dataset_list:
+        logger.info(f"Processing dataset: {dataset}")
         paths = get_paths(dataset) 
-
-        xml_string = read_file_as_string(paths["xml_path"])
-        xsd_string = read_file_as_string(paths["xsd_path"])
+       
+        try: 
+            xml_string = read_file_as_string(paths["xml_path"])
+            xsd_string = read_file_as_string(paths["xsd_path"])
+        except FileNotFoundError as e:
+            logger.error(str(e))
+            continue
 
         # xsd schema validation 
-        is_valid, result = validate_xsd(xml_string, xsd_string)
+        try: 
+            is_valid_xsd, result_xsd = validate_xsd(xml_string, xsd_string)
+        except Exception as e:
+            logger.error(f"Exception during XSD validation: {e}")
+            continue
 
-        if is_valid:
-            logger.info("XML is valid against the XSD.")
+        if is_valid_xsd:
+            logger.info(f"XML {dataset} is valid against the XSD.")
         else:
-            errors = result["Errors"]
-            logger.error("! XML is invalid. Errors:")
-            for err in errors:
-                logger.error(f"  - {err}")
+            errors_xsd = result_xsd["Errors"]
+            logger.error(f"! XML {dataset} is invalid. Errors:")
+            logger.error(f"  - {errors_xsd}")
+            result_xsd["Errors"].clear()
 
         # quality checks  
-        is_valid, result = process_xml(xml_string)
-
-        if is_valid:
-            logger.info("File validation completed — status: VALID.")
-        else:
-            errors = result["Errors"]
-            logger.error("! XML is invalid. Errors:")
-            for err in errors:
-                logger.error(f"{errors}")
-
-        # write db 
-        init_db()
+        try: 
+            is_valid_xml, result_xml = process_xml(xml_string)
+        except Exception as e:
+            logger.error(f"Exception during XML processing: {e}")
+            continue
         
-        indexed_id = result["IndexedId"]
-        validated_xml = result["ConvertedXml"]
+        # store to db   
+        if is_valid_xml:
+            logger.info(f"XML {dataset} validation completed — status: VALID.")
+            
+            indexed_id = result_xml["IndexedId"]
+            validated_xml = result_xml["ConvertedXml"]
 
-        payload = {
-            "IndexedId": indexed_id,
-            "ConvertedXml": validated_xml, 
-            "SourceSystem": prefix
-        }
+            payload = {
+                "IndexedId": indexed_id,
+                "ConvertedXml": validated_xml, 
+                "SourceSystem": prefix,
+                "MessageType": dataset
+            }
 
-        success, errors = store_xml_record(payload) 
-        if success:
-                logger.info("XML storing completed ")
-        else:
-            logger.error("! XML storing failed. Errors:")
-            for err in errors:
+            success, errors = store_xml_record(payload) 
+            if success:
+                logger.info(f"XML {dataset} storing completed ")
+            else:
+                logger.error(f"! XML {dataset} storing failed. Errors:")
                 logger.error(f"{errors}")
+                errors.clear()
+                
+        else:
+            errors_xml = result_xml["Errors"]
+            logger.error(f"! XML {dataset} is invalid. Errors:")
+            logger.error(f"{errors_xml}")
+            result_xml["Errors"].clear()
+
 
 if __name__ == '__main__':
+    init_db()
     main()

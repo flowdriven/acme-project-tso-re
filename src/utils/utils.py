@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 LOGS_DIR = PROJECT_ROOT / "logs"
 DB_DIR = PROJECT_ROOT / "db"
 
-prefix = os.getenv("PREFIX")
+prefix = os.getenv("PREFIX", "acme-tso-re")
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_path = str(LOGS_DIR / f"{prefix}_{timestamp}.log")
 

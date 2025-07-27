@@ -19,6 +19,7 @@ def init_db():
                 record_id TEXT NOT NULL,
                 content TEXT NOT NULL,
                 source_system TEXT NOT NULL,
+                message_type TEXT NOT NULL,        
                 created_at TEXT NOT NULL
             )
         """)
@@ -34,19 +35,21 @@ def store_xml_record(payload: dict):
         record_id (str): ID extracted from the XML.
         xml_string (str): Raw XML content.
         source_system (str): System that produced the XML.
+        message_type (str): Provisional or Final 
     """
     record_id = payload["IndexedId"]
     xml_string = payload["ConvertedXml"]
     source_system = payload["SourceSystem"]
+    message_type = payload["MessageType"]
     created_at = datetime.utcnow().timestamp()
 
     try: 
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO xml_data (record_id, content, source_system, created_at)
-                VALUES (?, ?, ?, ?)
-            """, (record_id, xml_string, source_system, created_at))
+                INSERT INTO xml_data (record_id, content, source_system, message_type, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (record_id, xml_string, source_system, message_type, created_at))
             conn.commit()
 
             return True, error_messages 

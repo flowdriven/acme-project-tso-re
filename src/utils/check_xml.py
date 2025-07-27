@@ -120,13 +120,13 @@ def process_xml(xml_string: str) -> tuple[bool, dict]:
         # Validate that values must contain exactly 2 decimals
         decimal_ok, decimal_errors = validate_two_decimals(root)
         if not decimal_ok:
-            errors.extend(decimal_errors)
+            errors.append(decimal_errors)
 
         # Validate that the sequence numbers must start 
         # from 1 and go incrementally with no gaps.
         is_sequence_valid, sequence_errors = validate_sequence_numbers(root)
         if not is_sequence_valid:
-            errors.extend(sequence_errors)
+            errors.append(sequence_errors)
 
         # Get the ID required for indexing the table 
         indexed_id_elem = root.find(f".//{indexed_id}")
